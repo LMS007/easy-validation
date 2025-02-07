@@ -46,7 +46,7 @@
  * @param {string} [prefix]
  * @return {true|ValidationError[]}
  */
-function validateData(schema, data, prefix = '') {
+async function validateData(schema, data, prefix = '') {
 
   if (typeof schema == 'function') {
     // no object literal supplied, just execute function
@@ -68,7 +68,10 @@ function validateData(schema, data, prefix = '') {
     return map;
   }, {});
 
-  Object.keys(schema).forEach(key => {
+  const keys = Object.keys(schema);
+  for (var i = 0; i < keys.length; i++) {
+    const key = keys[i];
+  //Object.keys(schema).forEach(async key => {
 
     delete extraneousKeyMap[key]; // key is handled by scheme, remove from map
     const schemaValue = schema[key];
@@ -80,10 +83,10 @@ function validateData(schema, data, prefix = '') {
       if (dataValue !== undefined) {
         // only follow this branch if there is matching data. Note that object
         // schemes are optional as opposed to isObject.isRequired
-        result = validateData(schemaValue, dataValue, newPrefix);
+        result = await validateData(schemaValue, dataValue, newPrefix);
       }
     } else {
-      result = schemaValue(dataValue, newPrefix);
+      result = await schemaValue(dataValue, newPrefix);
     }
 
     if (typeof result === 'string') {
@@ -97,7 +100,7 @@ function validateData(schema, data, prefix = '') {
       // multiple errors from branch
       results.push(...result);
     }
-  });
+  }
 
   for (extraneousKey in extraneousKeyMap) {
     const key = prefix ? `${prefix}.${extraneousKey}` : extraneousKey;
@@ -112,6 +115,18 @@ function validateData(schema, data, prefix = '') {
 
 function transformResult(validationErrors, type) {
 }
+
+function toKeys(validationResult) {
+  const keyErrors = validationResult.reduce((acc, item) => {
+    acc[item.key] = item.error
+    return acc;
+  }, {});
+  return keyErrors;
+}
+
+
+
+
 
 /**
  * @type {Validator} shim
@@ -142,14 +157,14 @@ function addRequiredCondition(shim) {
  * @param {Validator[]} types
  */
 function oneOfTypeShim(types) {
-  const shim = baseShim((value) => {
+  const shim = baseShim(async (value) => {
     let result;
     for (let i = 0; i < types.length; i++) {
       const isObject = isObjectShim(types[i]);
       if (isObject === true) {
-        result = validateData(types[i], value);
+        result = await validateData(types[i], value);
       } else {
-        result = types[i](value)
+        result = await types[i](value)
       }
       if (result === true) {
 
@@ -175,6 +190,15 @@ function isStringShim(value) {
   })(value);
 }
 
+isStringShim.condition = (customCondition) => {
+  const shim = baseShim(async value => {
+    return await customCondition(value);
+  });
+  addRequiredCondition(shim);
+  return shim;
+};
+
+
 /**
  * @type {(list: any[]) => Validator}
  */
@@ -194,6 +218,17 @@ isStringShim.oneOf = list => {
 };
 
 addRequiredCondition(isStringShim);
+
+/**
+ * @param {any} value
+ */
+function isCustomShim(customCondition) {
+  const shim = baseShim(async value => {
+    return await customCondition(value);
+  });
+  addRequiredCondition(shim);
+  return shim;
+};
 
 /**
  * @param {any} value
@@ -303,7 +338,7 @@ function isArrayShim(value) {
  * @type {(type: Validator) => Validator}
  */
 isArrayShim.ofType = (type) => {
-  const shim = baseShim((value, prefix = '') => {
+  const shim = baseShim(async (value, prefix = '') => {
     if (prefix !== '') {
       prefix = `${prefix}.`;
     }
@@ -315,9 +350,9 @@ isArrayShim.ofType = (type) => {
       // multiple errors may be returned if the type is an object
       for (let i = 0; i < value.length; i++) {
         if (isObjectShim(type) === true) {
-          result = validateData(type, value[i], `${prefix}${i}`);
+          result = await validateData(type, value[i], `${prefix}${i}`);
         } else {
-          result = type(value[i], `${prefix}${i}`);
+          result = await type(value[i], `${prefix}${i}`);
         }
 
         if (typeof result === 'string') {
@@ -358,10 +393,10 @@ function isObjectShim(value, ...args) {
  * @type {(shape: Object) => Validator}
  */
 isObjectShim.ofShape = shape => {
-  const shim = baseShim((value, prefix = '') => {
+  const shim = baseShim(async (value, prefix = '') => {
     const isObject = isObjectShim(value);
     if (isObject === true) {
-      return validateData(shape, value, prefix);
+      return await validateData(shape, value, prefix);
     }
     return isObject;
   });
@@ -370,6 +405,7 @@ isObjectShim.ofShape = shape => {
 };
 
 addRequiredCondition(isObjectShim);
+
 
 module.exports = {
   // validators
@@ -381,7 +417,9 @@ module.exports = {
   isArray: isArrayShim,
   isObject: isObjectShim,
   oneOfType: oneOfTypeShim,
+  isCustom: isCustomShim,
 
   // validation runner
   validateData: validateData,
+  toKeys: toKeys
 };

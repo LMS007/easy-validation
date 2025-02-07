@@ -20,7 +20,7 @@ const schema = {
 };
 
 router.post("/test", async (req, res) => {
-   const result = v.validateData(schema, req.body)
+   const result = await v.validateData(schema, req.body)
    if (result !== true) {
       res.status(400).json(result);
       return;
@@ -83,6 +83,9 @@ isInteger
 
 isString
   .oneOf(['enum1', 'enum2', ...])
+  .condition((value)=>(true || "error message"))
+    // condition func example: (v)=>(v === "hello world" ? true : false)
+    // condition can also be async
   .isRequired
 
 isFunction
@@ -102,6 +105,8 @@ oneOfType([
   <type1>, <type2>, ....
 ])
 
+isCustom(async value=>(true || "error message"))
+  .isRequired
 ```
 
 ### Object literal vs `isObject`
@@ -180,7 +185,7 @@ const sampleData = {
   }
 }
 
-const result = v.validateData(schema, sampleData);
+const result = await v.validateData(schema, sampleData);
 res.status(200).json(result);
 ```
 
@@ -192,6 +197,30 @@ result:
 ]
 ```
 
+## Async usage
+Use `isString.condition` or `isCustom` to pass async functions to validate values. This is useful for performing a database query to validate an ID for example asynchronously. Note: `isCustom` is more flexible where `isString.condition` must also be a string.
+
+```js
+  import v from 'easy-validation'
+
+  async function validateKey() {
+    // ...
+  }
+  async function validateId() {
+    // ...
+  }
+  const schmea = {
+    id: v.isCustom(validateKey).isRequired,
+    date: v.isString.condition(validateId).isRequired
+  }
+  const result = await v.validateData(schema, {
+    id: 123467,
+    key: "1234567"
+  });
+  
+```
+
+
 ### Mapping back to UI fields
 
 In many cases its helpful to map errors back to UI fields of nested properties. In these cases having an array of errors is not ideal. To make things easier, we can map the array to key value pairs since all the keys are unique.
@@ -200,6 +229,7 @@ In this partial example below, the error will render when returned from the serv
 React example:
 
 ```jsx
+import { toKeys } from 'easy-validation'
 
 const [fields setFields]  = useState({})
 const [validationErrors setValidationErrors]  = useState({})
@@ -223,10 +253,7 @@ try {
   await this.$axios.$post("...", fields);
 } catch(e) {
   // transform the array of errors to key:value errors that can be indexed into
-  const keyErrors = e.response.data.reduce((acc, item) => {
-    acc[item.key] = item.error
-    return acc;
-  }, {});
+  const keyErrors = toKeys(e.response.data)
   
   setValidationErrors(keyErrors); 
 }

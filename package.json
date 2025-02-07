@@ -1,6 +1,6 @@
 {
   "name": "@lms5400/easy-validation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple JSON schema validation. Ideal for request payloads",
   "main": "src/type-validation.js",
   "scripts": {

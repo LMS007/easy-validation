@@ -734,6 +734,17 @@ describe('shared/type-validation', () => {
           { key: 'b.c.varC', error: 'value is required but missing' }
         ]);
       });
+
+      it('can validate a single function as schema', async () => {
+        const schema = validators.isString
+        const data = '5'
+        assert.equal(await validators.validateData(schema, data), true);
+      });
+
+      it('rejects a single custom function as schema', async () => {
+        const schema = validators.isCustom(async ()=>('test fail'))
+        assert.equal(await validators.validateData(schema, {}), 'test fail');
+      });
     });
 
 

@@ -199,13 +199,18 @@ function isStringShim(value) {
   })(value);
 }
 
-isStringShim.condition = (customCondition) => {
-  const shim = baseShim(async value => {
-    return await customCondition(value);
-  });
-  addRequiredCondition(shim);
-  return shim;
+/*shim.isRequired = (value, ...args) => {
+    if (value === undefined) {
+      return 'value is required but missing';
+    }
+    return shim(value, ...args);
+  };*/
+
+isStringShim.notEmpty = (value) => {
+  return value === '' ? "string value can not be empty" : true
 };
+
+addRequiredCondition(isStringShim.notEmpty);
 
 
 /**
@@ -340,6 +345,25 @@ function isArrayShim(value) {
     return 'value is not an array';
   })(value);
 }
+
+/**
+ * @type {(lower: number ,upper: number) => Validator}
+ */
+isArrayShim.limit = (lower, upper) => {
+  const shim = baseShim(value => {
+    const isArray = isArrayShim(value);
+    if (isArray === true) {
+      if (value >= lower && value <= upper) {
+        return true;
+      } else {
+        return `array size falls outside of range (${lower}, ${upper})`;
+      }
+    }
+    return isArray;
+  });
+  addRequiredCondition(shim);
+  return shim;
+};
 
 /**
  * Restrict the array to a particular type.

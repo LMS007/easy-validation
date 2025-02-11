@@ -83,9 +83,7 @@ isInteger
 
 isString
   .oneOf(['enum1', 'enum2', ...])
-  .condition((value)=>(true || "error message"))
-    // condition func example: (v)=>(v === "hello world" ? true : false)
-    // condition can also be async
+  .notEmpty
   .isRequired
 
 isFunction
@@ -140,7 +138,7 @@ Both will validate the props the same, but if the `props` object was omitted, sc
 
 ## Wildcards
 
-In rear cases it might be helpful to create a schema for uuids or unknown key values. In this case we might not know the keys inside the `ids` object. In this case we can use a wildcard schema
+In some cases it might be helpful to create a schema for uuids or unknown key values. In this case we might not know the keys inside the `ids` object and so we can use a wildcard. This could be useful for being able to access data in `Big O(1)` time by an `id` rather than searching for it in an array structure.
 
 
 
@@ -173,7 +171,7 @@ const result = await v.validateData(schema, sampleData);
 ```
 
 
-## A Large Example
+## A Larger Example
 
 ```js
 import v from 'easy-validation'
@@ -232,24 +230,26 @@ result:
 ```
 
 ## Async usage
-Use `isString.condition` or `isCustom` to pass async functions to validate values. This is useful for performing a database query to validate an ID for example asynchronously. Note: `isCustom` is more flexible where `isString.condition` must also be a string.
+Use `isCustom` to pass async functions to validate values. This is useful for performing a database query to validate an ID asynchronously. 
 
 ```js
   import v from 'easy-validation'
 
-  async function validateKey() {
-    // ...
-  }
-  async function validateId() {
-    // ...
+  async function validateKey(value) {
+    try {
+      await myLookupFunction(value);
+      return true;
+    }
+    catch (e) {
+      return `value ${value} not found`
+    }
+
   }
   const schmea = {
     id: v.isCustom(validateKey).isRequired,
-    date: v.isString.condition(validateId).isRequired
   }
   const result = await v.validateData(schema, {
-    id: 123467,
-    key: "1234567"
+    id: 123467
   });
   
 ```

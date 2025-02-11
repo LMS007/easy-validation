@@ -18,15 +18,12 @@ describe('shared/type-validation', () => {
       assert.equal(validators.isString(undefined), true);
     });
 
-    it('can take a custom async condition', async () => {
-      const tt = await validators.isString.condition(
-          (v)=>(v.toUpperCase() === "FOO"))("foo")
-      assert.equal(tt, true);
+    it('can not be empty', async () => {
+      assert.equal(validators.isString.notEmpty(''), 'string value can not be empty');
     });
 
-    it('returns custom condition error message', async () => {
-      const tt = await validators.isString.condition(v=>("this failed!"))("foo")
-      assert.equal(tt, 'this failed!');
+    it('returns true when not empty', async () => {
+      assert.equal(validators.isString.notEmpty('string'), true);
     });
 
     describe('with isRequired', () => {
@@ -34,17 +31,19 @@ describe('shared/type-validation', () => {
         assert.equal(validators.isString.isRequired('string'), true);
       });
 
-      it('can take a custom condition', async () => {
-        const tt = await validators.isString.condition(
-            (v)=>(v.toUpperCase() === "FOO")).isRequired(undefined)
-        assert.equal(tt, 'value is required but missing');
-      });
-
       it('returns an error if the value is undefined', () => {
         assert.equal(
           validators.isString.isRequired(undefined),
           'value is required but missing'
         );
+      });
+
+      it('can not be empty', async () => {
+        assert.equal(validators.isString.notEmpty.isRequired(''), 'string value can not be empty');
+      });
+  
+      it('returns true when not empty', async () => {
+        assert.equal(validators.isString.notEmpty.isRequired('string'), true);
       });
     });
 
@@ -318,6 +317,24 @@ describe('shared/type-validation', () => {
           validators.isArray.isRequired(undefined),
           'value is required but missing'
         );
+      });
+    });
+
+    describe('with limit', () => {
+      it('does not return an error if the value is within the limits', () => {
+        assert.equal(validators.isArray.limit(0,1)([1]), true);
+      });
+      it('returns an error if the value is over the limits', () => {
+        assert.equal(validators.isArray.limit(0,1)([1,2]), 'array size falls outside of range (0, 1)');
+      });
+      it('returns an error if the value is under the limits', () => {
+        assert.equal(validators.isArray.limit(1,2)([]), 'array size falls outside of range (1, 2)');
+      });
+      it('isRequired still works', () => {
+        assert.equal(validators.isArray.limit(0,1).isRequired([1]), true);
+      });
+      it('isRequired still works', () => {
+        assert.equal(validators.isArray.limit(0,1).isRequired([1,2]), 'array size falls outside of range (0, 1)');
       });
     });
 

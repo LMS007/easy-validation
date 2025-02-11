@@ -845,4 +845,40 @@ describe('shared/type-validation', () => {
       ]);
     });
   })
+
+  describe('wildcard tests', () => {
+    it("can't have siblings", async () => {
+      try {
+        const schema = { 
+          a: {
+            'c': {},
+            '*': {
+              c: validators.isNumeric,
+            }
+          }
+        };
+        const result = await validators.validateData(schema, {a:{'1234': {}}});
+        throw new Error('failed to throw error')
+      }catch(e) {
+        assert.equal(e.message, 'Schema wildcard conflict. A wildcard can not have sibling keys')
+      }
+    })
+    it('can handle wildcards', async () => {
+      const data = {
+        a: {
+          '101': {},
+          '102': {}
+        }
+      }
+      const schema = { 
+        a: {
+          '*': {
+            c: validators.isNumeric,
+          }
+        }
+      };
+      const result = await validators.validateData(schema, data);
+      assert.equal(true, result)
+    })
+  })
 });

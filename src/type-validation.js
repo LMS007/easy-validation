@@ -47,10 +47,10 @@
  * @return {true|ValidationError[]}
  */
 async function validateData(schema, data, prefix = '') {
-
   if (typeof schema == 'function') {
     // no object literal supplied, just execute function
-    return schema(data, prefix);
+    const r = schema(data, prefix);
+    return r
   }
   const isObject = isObjectShim(data);
   if (isObject !== true) {
@@ -62,31 +62,39 @@ async function validateData(schema, data, prefix = '') {
 
   // ensures we don't pass extraneous values
   const extraneousKeysArr = data ? Object.keys(data) : [];
-  // key with true are extraneous, otherwise not.
-  const extraneousKeyMap = extraneousKeysArr.reduce((map, key) => {
-    map[key] = true
-    return map;
-  }, {});
+  
+  let keys = Object.keys(schema);
+  const wildCardIndex = keys.indexOf('*') 
+  if (wildCardIndex >= 0) {
+    // wildcard should always been the only key
+    if (keys.length > 1) {
+      throw new Error('Schema wildcard conflict. A wildcard can not have sibling keys')
+    }
+    const wildCards = (new Array(extraneousKeysArr.length)).fill('*')
+    keys = wildCards; // override all keys with wildcards
+  }
 
-  const keys = Object.keys(schema);
   for (var i = 0; i < keys.length; i++) {
-    const key = keys[i];
-  //Object.keys(schema).forEach(async key => {
+    let schemaKey = keys[i];
+    let dataKey = schemaKey; // always the same except for wildcard
+    if (schemaKey === '*') {
+      // wildcard takes precedence
+      dataKey = extraneousKeysArr[0] // just take the first
+    }
+    const dataKeyIndex  = extraneousKeysArr.indexOf(dataKey); // will be 0 for wildcard, but could be any value otherwise
+    if (dataKeyIndex >= 0) {
+      // if found, remove from array
+      extraneousKeysArr.splice(dataKeyIndex,1) 
+    }
 
-    delete extraneousKeyMap[key]; // key is handled by scheme, remove from map
-    const schemaValue = schema[key];
-    const dataValue = data ? data[key] : undefined;
-    const newPrefix = prefix ? `${prefix}.${key}` : key;
-    let result;
+    const schemaValue = schema[schemaKey];
+    const dataValue = data ? data[dataKey] : undefined;
+    const newPrefix = prefix ? `${prefix}.${dataKey}` : dataKey;
+    let result = undefined;
 
-    if (typeof schemaValue === 'object') {
-      if (dataValue !== undefined) {
-        // only follow this branch if there is matching data. Note that object
-        // schemes are optional as opposed to isObject.isRequired
-        result = await validateData(schemaValue, dataValue, newPrefix);
-      }
-    } else {
-      result = await schemaValue(dataValue, newPrefix);
+    if (dataValue !== undefined || typeof schemaValue === 'function') {
+      // drill deeper if there if the dataValue exists or the schemaValue is a function
+      result = await validateData(schemaValue, dataValue, newPrefix);
     }
 
     if (typeof result === 'string') {
@@ -102,13 +110,14 @@ async function validateData(schema, data, prefix = '') {
     }
   }
 
-  for (extraneousKey in extraneousKeyMap) {
+  
+  for (extraneousKey of extraneousKeysArr) {
+    // error
     const key = prefix ? `${prefix}.${extraneousKey}` : extraneousKey;
     results.push({
       key,
       error: 'extraneous key found',
     });
-
   }
   return results.length ? results : true;
 }

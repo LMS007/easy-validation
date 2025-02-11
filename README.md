@@ -138,6 +138,40 @@ var schema2 = {
 
 Both will validate the props the same, but if the `props` object was omitted, schema1 would not provide an error but schema2 would.
 
+## Wildcards
+
+In rear cases it might be helpful to create a schema for uuids or unknown key values. In this case we might not know the keys inside the `ids` object. In this case we can use a wildcard schema
+
+
+
+> Note: You can not have any sibling schema keys alongside a wildcard. It must be the only key in an object schema.
+
+```js
+import v from 'easy-validation'
+
+const sampleData = {
+  ids: {
+    '1001' : {
+      name: 'name1'
+      
+    },
+    '1002' : {
+      name: 'name2'
+    }, //...
+  }
+}
+
+const schema = {
+  'ids': {
+    '*': isObject.ofShape({
+      name: isString.isRequired
+    }).isRequired
+  }
+}
+
+const result = await v.validateData(schema, sampleData);
+```
+
 
 ## A Large Example
 

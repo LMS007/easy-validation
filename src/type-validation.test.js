@@ -19,7 +19,7 @@ describe('shared/type-validation', () => {
     });
 
     it('can not be empty', async () => {
-      assert.equal(validators.isString.notEmpty(''), 'string value can not be empty');
+      assert.equal(await validators.isString.notEmpty(''), 'string value can not be empty');
     });
 
     it('returns true when not empty', async () => {
@@ -344,15 +344,16 @@ describe('shared/type-validation', () => {
           foo: validators.isString.isRequired,
           bar: validators.isString.isRequired,
           cool: validators.isObject.ofShape({
-            hot: validators.isString.isRequired
+            hot: validators.isString.isRequired,
+            warm: validators.isString.notEmpty
           }).isRequired
         }
         const result = (await validators.isArray.ofType(schema)([
           { fo2o: '1', b2ar: 'string' },
           { foo: '2', b2ar: 'string' },
           { foo: '3', bar: 'string' },
-          { foo: '4', bar: 'string', cool: {} },
-          { foo: '5', bar: 'string', cool: { hot: 'string' } }, // last one okay
+          { foo: '4', bar: 'string', cool: { warm: '' },},
+          { foo: '5', bar: 'string', cool: { warm: 'yes', hot: 'string' } }, // last one okay
         ]))
 
         assert.deepEqual(result,
@@ -366,7 +367,8 @@ describe('shared/type-validation', () => {
             { key: '1.cool', error: 'value is required but missing' },
             { key: '1.b2ar', error: 'extraneous key found' },
             { key: '2.cool', error: 'value is required but missing' },
-            { key: '3.cool.hot', error: 'value is required but missing' }
+            { key: '3.cool.hot', error: 'value is required but missing' },
+            { key: '3.cool.warm', error: 'string value can not be empty' }
           ]);
       });
 
@@ -399,6 +401,13 @@ describe('shared/type-validation', () => {
         // Allow empty arrays even with ofType condition.
         assert.equal(
           await validators.isArray.ofType(validators.isNumeric).isRequired([]),
+          true
+        );
+      });
+      it.skip('can still add limit and required', async () => {
+        // Allow empty arrays even with ofType condition.
+        assert.equal(
+          await validators.isArray.ofType(validators.isNumeric).limit(0,10).isRequired(['4']),
           true
         );
       });
@@ -850,7 +859,6 @@ describe('shared/type-validation', () => {
         },
       };
       const result = await validators.validateData(schema, data);
-      console.log(result)
       assert.deepEqual(result, [
         {
           key: 'zoo.hours', error: 'value failed to match one of the the allowed types'

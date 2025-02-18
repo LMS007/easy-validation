@@ -75,7 +75,7 @@ async function validateData(schema, data, prefix = '') {
   }
 
   for (var i = 0; i < keys.length; i++) {
-    let schemaKey = keys[i];
+    const schemaKey = keys[i];
     let dataKey = schemaKey; // always the same except for wildcard
     if (schemaKey === '*') {
       // wildcard takes precedence
@@ -90,6 +90,7 @@ async function validateData(schema, data, prefix = '') {
     const schemaValue = schema[schemaKey];
     const dataValue = data ? data[dataKey] : undefined;
     const newPrefix = prefix ? `${prefix}.${dataKey}` : dataKey;
+    
     let result = undefined;
 
     if (dataValue !== undefined || typeof schemaValue === 'function') {
@@ -110,7 +111,6 @@ async function validateData(schema, data, prefix = '') {
     }
   }
 
-  
   for (extraneousKey of extraneousKeysArr) {
     // error
     const key = prefix ? `${prefix}.${extraneousKey}` : extraneousKey;
@@ -135,8 +135,6 @@ function toKeys(validationResult) {
 
 
 
-
-
 /**
  * @type {Validator} shim
  */
@@ -150,17 +148,16 @@ function baseShim(shim) {
   };
 }
 
-/**
- * @type {Validator} shim
- */
-function addRequiredCondition(shim) {
-  shim.isRequired = (value, ...args) => {
-    if (value === undefined) {
-      return 'value is required but missing';
-    }
-    return shim(value, ...args);
-  };
-}
+function isRequired(value) {
+  if (value === undefined) {
+    return 'value is required but missing';
+  }
+  return true;
+};
+
+
+
+// todo add condition for wrapped
 
 /**
  * @param {Validator[]} types
@@ -183,7 +180,7 @@ function oneOfTypeShim(types) {
     }
     return 'value failed to match one of the the allowed types'
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
   return shim;
 }
 
@@ -199,18 +196,49 @@ function isStringShim(value) {
   })(value);
 }
 
-/*shim.isRequired = (value, ...args) => {
-    if (value === undefined) {
-      return 'value is required but missing';
-    }
-    return shim(value, ...args);
-  };*/
-
-isStringShim.notEmpty = (value) => {
+function notEmpty(value) {
   return value === '' ? "string value can not be empty" : true
-};
+}
 
-addRequiredCondition(isStringShim.notEmpty);
+
+addCondition(isStringShim, {notEmpty});
+addCondition(isStringShim.notEmpty, {isRequired});
+
+
+function addCondition(shim, condition) {
+  const name = Object.keys(condition)[0];
+  shim[name] = (value, ...args) => {
+    const result = shim(value, ...args);
+    if(result === true) {
+      return condition[name](value);
+    } else {
+      return result;
+    }
+  };
+}
+
+/*
+function addParameterizedCondition(shim, condition) {
+  const name = Object.keys(condition)[0];
+  shim[name] = (params) => {
+    validator = condition[name](params);
+    const wrappedValidator = (value, ...args) => {
+      const result = shim(value, ...args);
+      if(result === true) {
+        return validator(value);
+      } else {
+        return result;
+      }
+    }
+    shimFunctionNames = Object.keys(shim)
+    for (let name in shim) {
+      // move the function pointers forward into the proxy
+      wrappedValidator[name] = shim[name]
+    }
+    return wrappedValidator;
+  };
+}
+*/
 
 
 /**
@@ -227,11 +255,12 @@ isStringShim.oneOf = list => {
     }
     return isString;
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
+  addCondition(shim, {notEmpty});
   return shim;
 };
 
-addRequiredCondition(isStringShim);
+addCondition(isStringShim, {isRequired});
 
 /**
  * @param {any} value
@@ -239,8 +268,8 @@ addRequiredCondition(isStringShim);
 function isCustomShim(customCondition) {
   const shim = baseShim(async value => {
     return await customCondition(value);
-  });
-  addRequiredCondition(shim);
+  }); 
+  addCondition(shim, {isRequired});
   return shim;
 };
 
@@ -254,7 +283,7 @@ const isBooleanShim = baseShim(value => {
   return 'value is not a boolean';
 });
 
-addRequiredCondition(isBooleanShim);
+addCondition(isBooleanShim, {isRequired});
 
 /**
  * @param {any} value
@@ -283,11 +312,11 @@ isNumericShim.limit = (lower, upper) => {
     }
     return isNumeric;
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
   return shim;
 };
 
-addRequiredCondition(isNumericShim);
+addCondition(isNumericShim, {isRequired});
 
 /**
  * @param {any} value
@@ -316,11 +345,11 @@ isIntegerShim.limit = (lower, upper) => {
     }
     return isInteger;
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
   return shim;
 };
 
-addRequiredCondition(isIntegerShim);
+addCondition(isIntegerShim, {isRequired});
 
 /**
  * @param {any} value
@@ -332,7 +361,7 @@ const isFunctionShim = baseShim(value => {
   return 'value is not a function';
 });
 
-addRequiredCondition(isFunctionShim);
+addCondition(isFunctionShim, {isRequired});
 
 /**
  * @param {any} value
@@ -361,7 +390,7 @@ isArrayShim.limit = (lower, upper) => {
     }
     return isArray;
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
   return shim;
 };
 
@@ -403,11 +432,11 @@ isArrayShim.ofType = (type) => {
     }
     return isArray;
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
   return shim;
 };
 
-addRequiredCondition(isArrayShim);
+addCondition(isArrayShim, {isRequired});
 
 /**
  * @param {any} value
@@ -433,11 +462,11 @@ isObjectShim.ofShape = shape => {
     }
     return isObject;
   });
-  addRequiredCondition(shim);
+  addCondition(shim, {isRequired});
   return shim;
 };
 
-addRequiredCondition(isObjectShim);
+addCondition(isObjectShim, {isRequired});
 
 
 module.exports = {

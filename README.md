@@ -97,11 +97,13 @@ isObject
 
 isArray
   .ofType( <type> )
-  )
+  .limit(lower, upper)
+  .isRequired
 
 oneOfType([
-  <type1>, <type2>, ....
-])
+    <type1>, <type2>, ....
+  ])
+  .isRequired
 
 isCustom(async value=>(true || "error message"))
   .isRequired

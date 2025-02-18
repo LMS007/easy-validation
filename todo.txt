@@ -1,0 +1,2 @@
+- add size limits to Array type
+- add noOneOf for string values

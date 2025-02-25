@@ -187,6 +187,139 @@ const schema = {
 const result = await validateData(schema, sampleData);
 ```
 
+## A Larger Example
+
+This is a more complete sample of what the API might look like in practice.
+
+```js
+const {types, conditions, validateData} = require('./src/index');
+
+const color = {
+  red: types.isInteger.and(conditions.range(0,255), conditions.required),
+  green: types.isInteger.and(conditions.range(0,255), conditions.required),
+  blue: types.isInteger.and(conditions.range(0,255), conditions.required),
+  alpha: types.isNumeric.and(conditions.range(0,1), conditions.required),
+}
+
+const defaultColor = types.isString.and(conditions.inList([
+  'red', 
+  'blue', 
+  'green', 
+  'yellow', 
+  'black'
+]));
+
+const schema = {
+  name: types.isString.and(conditions.required),
+  description: types.isString,
+  colors: types.isArray.and(conditions.ofType(
+    types.isAnyOf([
+      // array items can be a color or enumerated string
+      color, 
+      defaultColor]) 
+    ),
+    conditions.required
+  ),
+  properties: types.isObject.and(
+    conditions.ofShape({
+      length: types.isNumeric.and(conditions.range(0,100), conditions.required),
+      width: types.isNumeric.and(conditions.range(0,100), conditions.required),
+      height: types.isNumeric.and(conditions.range(0,100), conditions.required),
+    }),
+    conditions.required
+  )
+}
+
+const sampleData = {
+  name: "mycolor",
+  colors: [{red:100, green:255, blue:0, alpha: 0.5}, 'yellow', 'black', 'orange'],
+  properties: {
+    length: 5.5,
+    width: 20.1,
+    height: 55.9
+  }
+}
+
+const result = await validateData(schema, sampleData);
+res.status(200).json(result);
+```
+
+result:
+
+```json
+[
+  {
+    "key":"colors.3",
+    "error":"value failed to match one of the the allowed types"
+  }
+]
+```
+
+## Asynchronous usage and custom conditions
+Use `isCustom` to pass asynchronous functions to value validation. This is useful for performing a database query to validate an ID asynchronously. Alternatively you may also create any custom condition you wish and add it to the `and()` parameters for a given type. Conditions are asynchronously by nature too.
+
+```js
+  const {types, conditions, validateData} = require('./src/index');
+
+  async function validateKey(value) {
+    try {
+      await myLookupFunction(value); // this could be a lookup in a database for example
+      return true;
+    }
+    catch (e) {
+      return `value ${value} not found`
+    }
+
+  }
+  const schmea = {
+    id: types.isCustom(validateKey).and(conditions.required),
+  }
+  const result = await validateData(schema, {
+    id: 123467
+  });
+  
+```
+
+
+## Mapping back to UI fields
+
+In many cases, it is helpful to map errors back to UI fields of nested properties. However, using an array of errors in such cases is not ideal. To simplify this process, we can convert the array into key-value pairs since all keys are unique.
+
+In the partial example below, the error will be displayed when returned from the service; otherwise, it will not. This approach can also work for arrays, as the array index is reported back. You can further enhance this by creating encapsulated validation components for form fields.
+
+### React example:
+
+```jsx
+import { toKeys } from 'easy-validation'
+
+const [fields setFields]  = useState({})
+const [validationErrors setValidationErrors]  = useState({})
+
+...
+
+<form>
+  ...
+  <div>
+    <label for="my-height-field">Height</label>
+    <input id="my-height-field" type="text" defaultValue={fields.attributes.height}>
+    <span style={{color: 'red'}}>{validationErrors['attributes.height'] || ''}</span>
+  </div>
+  ...
+</form>
+
+... 
+
+try {
+  // some API endpoint that validates the payload
+  await this.$axios.$post("...", fields);
+} catch(err) {
+  // transform the array of errors to key:value errors that can be indexed into
+  const keyErrors = toKeys(err.response.data)
+  
+  setValidationErrors(keyErrors); 
+}
+```
+
 ## Future Enhancements
 
 - Custom error messages for each type

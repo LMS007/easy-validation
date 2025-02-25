@@ -1,6 +1,6 @@
 # Simple Javascript Object & JSON Validator
 
-This package is a light weight schema validator useful for asserting keys and types inside an object or a JSON response often from an HTTP requests. You can reject requests which have incomplete or malformed payloads before passing that data along to other parts of the system. Its also useful for giving users feedback about what is malformed.
+This package is a light weight schema validator useful for asserting keys and types inside an object or a JSON response often from an HTTP requests. You can reject requests which have incomplete or malformed payloads before passing that data along to other parts of the system. Its also useful for giving users feedback about what is malformed. This package pairs especially well with MongoDB where after you validate, you can directly insert the JSON objects into the database with confidence.
 
 
 ## Simple example
@@ -212,7 +212,7 @@ const result = await validateData(schema, sampleData);
 
 
 ## A Larger Example
-
+Lets try to validate an ob
 ```js
 const {types, conditions, validateData} = require('./src/index');
 
@@ -278,7 +278,7 @@ result:
 ```
 
 ## Async usage
-Use `isCustom` to pass async functions to validate values. This is useful for performing a database query to validate an ID asynchronously. 
+Use `isCustom` to pass async functions to value validation. This is useful for performing a database query to validate an ID asynchronously. 
 
 ```js
   const {types, conditions, validateData} = require('./src/index');
@@ -303,7 +303,7 @@ Use `isCustom` to pass async functions to validate values. This is useful for pe
 ```
 
 
-### Mapping back to UI fields
+## Mapping back to UI fields
 
 In many cases its helpful to map errors back to UI fields of nested properties. In these cases having an array of errors is not ideal. To make things easier, we can map the array to key value pairs since all the keys are unique.
 In this partial example below, the error will render when returned from the service, otherwise it won't.  _This could even work for arrays of things since the array's index is reported back._ You can take this further by crafting encapsulated validation components for fields.

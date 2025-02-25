@@ -68,6 +68,7 @@ The validation result is either `true` or an array of errors. Each error contain
 success
 ```
 
+> Note: To use the results in a UI such as in a React frontend app, its helpful to use `toKeys()` to convert the array of errors to a key value map. See [Mapping back to UI fields](#mapping-back-to-ui-fields) below.
 ## Types and Conditions
 
 All schema values must resolve to a `type`. Optionally, each type may have one or more `conditions` attached using the `and()` function to further specify constraints.
@@ -85,15 +86,23 @@ const result = validateData(schema, "hello world");
 
 ```ts
 isBoolean
+
 isNumeric
+
 isInteger
+
 isString
+
 isFunction
+
 isObject
+
 isArray
+
 isAnyOf([
   param1: type, param2: type, ...
 ])
+
 isCustom((value: any) => true | "error message")
 ```
 

@@ -1,74 +1,82 @@
 const assert = require('assert').strict;
 
-const validators = require('./type-validation');
+const { required } = require('../conditions');
+const {types, conditions, validateData, toKeys} = require('../index');
 
 
 describe('shared/type-validation', () => {
   describe('isString', () => {
     it('does not return an error if the value is a string', () => {
-      const tt = (validators.isString('string'));
+      const tt = (types.isString('string'));
       assert.equal(tt, true);
     });
 
     it('returns an error if the value is not a string', () => {
-      assert.equal(validators.isString(0), 'value is not a string');
+      assert.equal(types.isString(0), 'value is not a string');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isString(undefined), true);
+      assert.equal(types.isString(undefined), true);
     });
 
     it('can not be empty', async () => {
-      assert.equal(await validators.isString.notEmpty(''), 'string value can not be empty');
+      assert.equal(await types.isString.and(conditions.notEmpty)(''), 'string value can not be empty');
     });
 
     it('returns true when not empty', async () => {
-      assert.equal(validators.isString.notEmpty('string'), true);
+      assert.equal(await types.isString.and(conditions.notEmpty)('string'), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
-        assert.equal(validators.isString.isRequired('string'), true);
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
+        assert.equal(
+          await types.isString.and(conditions.required)('string'), 
+          true);
       });
 
-      it('returns an error if the value is undefined', () => {
+      it('returns an error if the value is undefined', async () => {
         assert.equal(
-          validators.isString.isRequired(undefined),
-          'value is required but missing'
-        );
+          await types.isString.and(conditions.required)(undefined),
+          'value is required but missing');
       });
 
       it('can not be empty', async () => {
-        assert.equal(validators.isString.notEmpty.isRequired(''), 'string value can not be empty');
+        assert.equal(
+          await types.isString.and(conditions.notEmpty, conditions.required)(''), 
+          'string value can not be empty');
       });
   
       it('returns true when not empty', async () => {
-        assert.equal(validators.isString.notEmpty.isRequired('string'), true);
+        assert.equal(
+          await types.isString.and(conditions.notEmpty, conditions.required)('string'), 
+          true);
       });
     });
 
-    describe('with onOne', () => {
-      it('does not return an error if the value is allowed', () => {
-        assert.equal(validators.isString.oneOf(['one', 'two'])('one'), true);
+    describe('with inList', () => {
+      it('does not return an error if the value is allowed', async () => {
+        assert.equal(
+          await types.isString.and(conditions.inList(['one', 'two']))('one'), 
+          true);
       });
 
-      it('returns an error if the value is not a string', () => {
+      it('returns an error if the value is not a string', async () => {
         assert.equal(
-          validators.isString.oneOf(['one', 'two'])(0),
+          await types.isString.and(conditions.inList(['one', 'two']))(0),
           'value is not a string'
         );
       });
 
-      it('returns an error if the value is not allowed', () => {
+      it('returns an error if the value is not allowed', async () => {
         assert.equal(
-          validators.isString.oneOf(['one', 'two'])('three'),
+          await types.isString.and(conditions.inList(['one', 'two']))('three'),
           'value does not match accepted values: [one,two]'
         );
       });
 
-      it('can still be required', () => {
+      it('can still be required', async () => {
         assert.equal(
-          validators.isString.oneOf(['one', 'two']).isRequired('one'),
+          await types.isString.and(conditions.inList(['one', 'two']), conditions.required)('one'),
           true
         );
       });
@@ -77,167 +85,180 @@ describe('shared/type-validation', () => {
 
   describe('isBoolean', () => {
     it('does not return an error if the value is a boolean', () => {
-      assert.equal(validators.isBoolean(false), true);
+      assert.equal(types.isBoolean(false), true);
     });
 
     it('returns an error if the value is not a boolean', () => {
-      assert.equal(validators.isBoolean(0), 'value is not a boolean');
+      assert.equal(types.isBoolean(0), 'value is not a boolean');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isBoolean(undefined), true);
+      assert.equal(types.isBoolean(undefined), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
-        assert.equal(validators.isBoolean.isRequired(false), true);
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
+        assert.equal(
+          await types.isBoolean.and(conditions.required)(false), 
+          true);
       });
 
-      it('returns an error if the value is undefined', () => {
+      it('returns an error if the value is undefined', async () => {
         assert.equal(
-          validators.isBoolean.isRequired(undefined),
+          await types.isBoolean.and(conditions.required)(undefined),
           'value is required but missing'
         );
       });
     });
   });
-
+  
   describe('isNumeric', () => {
     it('does not return an error if the value is a number', () => {
-      assert.equal(validators.isNumeric(1), true);
+      assert.equal(types.isNumeric(1), true);
     });
 
     it('returns an error if the value is not a number', () => {
-      assert.equal(validators.isNumeric('1'), 'value is not a number');
+      assert.equal(types.isNumeric('1'), 'value is not a number');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isNumeric(undefined), true);
+      assert.equal(types.isNumeric(undefined), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
-        assert.equal(validators.isNumeric.isRequired(1), true);
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
+        assert.equal(
+          await  types.isNumeric.and(conditions.required)(1), 
+          true);
       });
 
-      it('returns an error if the value is undefined', () => {
+      it('returns an error if the value is undefined', async () => {
         assert.equal(
-          validators.isNumeric.isRequired(undefined),
+          await types.isNumeric.and(conditions.required)(undefined),
           'value is required but missing'
         );
       });
     });
 
-    describe('with limit', () => {
-      it('does not return an error if the value is inside a limit', () => {
-        assert.equal(validators.isNumeric.limit(0, 10)(5), true);
+    describe('with range', () => {
+      it('does not return an error if the value is inside a limit', async () => {
+        assert.equal(
+          await types.isNumeric.and(conditions.range(0, 10))(5), 
+          true);
       });
 
-      it('returns an error if the value is not a number', () => {
+      it('returns an error if the value is not a number', async () => {
         assert.equal(
-          validators.isNumeric.limit(0, 10)('1'),
+          await types.isNumeric.and(conditions.range(0, 10))('1'),
           'value is not a number'
         );
       });
 
-      it('returns an error if the value is above a limit', () => {
+      it('returns an error if the value is above a limit', async () => {
         assert.equal(
-          validators.isNumeric.limit(0, 10)(11),
+          await types.isNumeric.and(conditions.range(0, 10))(11),
           'value falls outside of range (0, 10)'
         );
       });
 
-      it('returns an error if the value is below a limit', () => {
+      it('returns an error if the value is below a limit', async () => {
         assert.equal(
-          validators.isNumeric.limit(0, 10)(-1),
+          await types.isNumeric.and(conditions.range(0, 10))(-1),
           'value falls outside of range (0, 10)'
         );
       });
 
-      it('can still can required', () => {
-        assert.equal(validators.isNumeric.limit(0, 10).isRequired(5), true);
+      it('can still can be required', async () => {
+        assert.equal(await types.isNumeric.and(
+          conditions.range(0, 10),
+          conditions.required)(5), 
+        true);
       });
     });
   });
-
+  
   describe('isInteger', () => {
     it('does not return an error if the value is an integer', () => {
-      assert.equal(validators.isInteger(1), true);
+      assert.equal(types.isInteger(1), true);
     });
 
     it('returns an error if the value is not a integer', () => {
-      assert.equal(validators.isInteger(1.5), 'value is not an integer');
+      assert.equal(types.isInteger(1.5), 'value is not an integer');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isInteger(undefined), true);
+      assert.equal(types.isInteger(undefined), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
-        assert.equal(validators.isInteger.isRequired(1), true);
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
+        assert.equal(await types.isInteger.and(conditions.required)(1), true);
       });
 
-      it('returns an error if the value is undefined', () => {
+      it('returns an error if the value is undefined', async () => {
         assert.equal(
-          validators.isInteger.isRequired(undefined),
+          await types.isInteger.and(conditions.required)(undefined),
           'value is required but missing'
         );
       });
     });
 
     describe('with limit', () => {
-      it('does not return an error if the value is inside a limit', () => {
-        assert.equal(validators.isInteger.limit(0, 10)(5), true);
+      it('does not return an error if the value is inside a limit', async () => {
+        assert.equal(
+          await types.isInteger.and(conditions.range(0, 10))(5), 
+          true);
       });
 
-      it('returns an error if the value is not an integer', () => {
+      it('returns an error if the value is not an integer', async () => {
         assert.equal(
-          validators.isInteger.limit(0, 10)(5.5),
+          await types.isInteger.and(conditions.range(0, 10))(5.5),
           'value is not an integer'
         );
       });
 
-      it('returns an error if the value is above a limit', () => {
+      it('returns an error if the value is above a limit', async () => {
         assert.equal(
-          validators.isInteger.limit(0, 10)(11),
+          await types.isInteger.and(conditions.range(0, 10))(11),
           'value falls outside of range (0, 10)'
         );
       });
 
-      it('returns an error if the value is below a limit', () => {
+      it('returns an error if the value is below a limit', async () => {
         assert.equal(
-          validators.isInteger.limit(0, 10)(-1),
+          await types.isInteger.and(conditions.range(0, 10))(-1),
           'value falls outside of range (0, 10)'
         );
       });
 
-      it('can still be required', () => {
-        assert.equal(validators.isInteger.limit(0, 10).isRequired(5), true);
+      it('can still be required', async () => {
+        assert.equal(
+          await types.isInteger.and(conditions.range(0, 10), conditions.required)(5), 
+          true);
       });
     });
   });
-
+  
   describe('isCustom', () => {
     it('runs a custom function and passes', async () => {
-      const result = await validators.isCustom((v)=>(v === "hello world" ? true : "string does not match"))("hello world")
+      const result = await types.isCustom((v)=>(v === "hello world" ? true : "string does not match"))("hello world")
       assert.equal(result, true);
     });
 
     it('runs a custom function and fails', async () => {
-      const result = await validators.isCustom((v)=>(v === "hello world" ? true : "string does not match"))("hello moon")
+      const result = await types.isCustom((v)=>(v === "hello world" ? true : "string does not match"))("hello moon")
       assert.equal(result, 'string does not match');
     });
 
-    describe('with isRequired', () => {
+    describe('with required', () => {
       it('runs a custom function and passes', async () => {
         const custom = (v)=>(v === "hello world" ? true : "string does not match")
-        const result = await validators.isCustom(custom).isRequired("hello world")
+        const result = await types.isCustom(custom).and(conditions.required)("hello world")
         assert.equal(result, true);
       });
       it('returns an error if the value is undefined', async () => {
         const custom = (v)=>(v === "hello world" ? true : "string does not match")
-        const result = await validators.isCustom(custom).isRequired(undefined)
+        const result = await types.isCustom(custom).and(conditions.required)(undefined)
         assert.equal(result, 'value is required but missing');
       });
     })
@@ -255,100 +276,116 @@ describe('shared/type-validation', () => {
           await wait100();
           return true
         }
-        const result = await validators.isCustom(custom)("hello world")
+        const result = await types.isCustom(custom)("hello world")
         assert.equal(result, true);
       });
     })
   });
-
+  
   describe('isFunction', () => {
     it('does not return an error if the value is a function', () => {
       assert.equal(
-        validators.isFunction(() => { }),
+        types.isFunction(() => { }),
         true
       );
     });
 
     it('returns an error if the value is not a function', () => {
-      assert.equal(validators.isFunction(0), 'value is not a function');
+      assert.equal(types.isFunction(0), 'value is not a function');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isFunction(undefined), true);
+      assert.equal(types.isFunction(undefined), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
         assert.equal(
-          validators.isFunction.isRequired(() => { }),
+          await types.isFunction.and(conditions.required)(() => { }),
           true
         );
       });
 
-      it('returns an error if the value is undefined', () => {
+      it('returns an error if the value is undefined', async () => {
         assert.equal(
-          validators.isFunction.isRequired(undefined),
+          await types.isFunction.and(conditions.required)(undefined),
           'value is required but missing'
         );
       });
     });
   });
 
+  
   describe('isArray', () => {
     it('does not return an error if the value is an array', () => {
-      assert.equal(validators.isArray([]), true);
+      assert.equal(types.isArray([]), true);
     });
 
     it('returns an error if the value is not an array', () => {
-      assert.equal(validators.isArray(0), 'value is not an array');
+      assert.equal(types.isArray(0), 'value is not an array');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isArray(undefined), true);
+      assert.equal(types.isArray(undefined), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
-        assert.equal(validators.isArray.isRequired([]), true);
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
+         assert.equal(
+          await types.isArray.and(conditions.required)([]), 
+          true);
       });
 
-      it('returns an error if the value is undefined', () => {
+      it('returns an error if the value is undefined', async () => {
         assert.equal(
-          validators.isArray.isRequired(undefined),
+          await types.isArray.and(conditions.required)(undefined),
           'value is required but missing'
         );
       });
     });
 
-    describe('with limit', () => {
-      it('does not return an error if the value is within the limits', () => {
-        assert.equal(validators.isArray.limit(0,1)([1]), true);
+    describe('with range', () => {
+      it('does not return an error if the value is within the limits', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(0,1))([1]), 
+          true);
       });
-      it('returns an error if the value is over the limits', () => {
-        assert.equal(validators.isArray.limit(0,1)([1,2]), 'array size falls outside of range (0, 1)');
+      it('returns an error if the value is over the limits', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(0,1))([1,2]), 
+          'array size falls outside of range (0, 1)');
       });
-      it('returns an error if the value is under the limits', () => {
-        assert.equal(validators.isArray.limit(1,2)([]), 'array size falls outside of range (1, 2)');
+      it('returns an error if the value is under the limits', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(1,2))([]), 
+          'array size falls outside of range (1, 2)');
       });
-      it('isRequired still works', () => {
-        assert.equal(validators.isArray.limit(0,1).isRequired([1]), true);
+      it('isRequired still works', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(0,1), conditions.required)([1]), 
+          true);
       });
-      it('isRequired still works', () => {
-        assert.equal(validators.isArray.limit(0,1).isRequired([1,2]), 'array size falls outside of range (0, 1)');
+      it('isRequired still works', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(0,1), conditions.required)([1,2]),
+          'array size falls outside of range (0, 1)');
       });
     });
 
     describe('with ofType', () => {
       it('returns multiple errors for each item into the array which fails to match the type', async () => {
-        const schema = {
-          foo: validators.isString.isRequired,
-          bar: validators.isString.isRequired,
-          cool: validators.isObject.ofShape({
-            hot: validators.isString.isRequired,
-            warm: validators.isString.notEmpty
-          }).isRequired
+        const shape = {
+          foo: types.isString.and(conditions.required),
+          bar: types.isString.and(conditions.required),
+          cool: types.isObject.and(
+            conditions.ofShape({
+              hot: types.isString.and(conditions.required),
+              warm: types.isString.and(conditions.notEmpty)
+            }),
+            conditions.required
+          )
         }
-        const result = (await validators.isArray.ofType(schema)([
+        const result = (await types.isArray.and(conditions.ofType(shape))([
           { fo2o: '1', b2ar: 'string' },
           { foo: '2', b2ar: 'string' },
           { foo: '3', bar: 'string' },
@@ -374,25 +411,31 @@ describe('shared/type-validation', () => {
 
       it('does not return an error if the array is of the specified type', async () => {
         assert.equal(
-          await validators.isArray.ofType(validators.isNumeric)([1]),
+          await types.isArray.and(
+            conditions.ofType(types.isNumeric))([1]),
           true
         );
       });
 
       it('does not return an error if the array is empty', async () => {
-        assert.equal(await validators.isArray.ofType(validators.isNumeric)([]), true);
+        assert.equal(
+          await types.isArray.and(
+            conditions.ofType(types.isNumeric))([]), 
+          true);
       });
 
       it('returns an error if the value of the array is not of the specified type', async () => {
         assert.deepEqual(
-          await validators.isArray.ofType(validators.isNumeric)([false]),
+          await types.isArray.and(
+            conditions.ofType(types.isNumeric))([false]),
           [{ error: 'value is not a number', key: '0' }]
         );
       });
 
       it('returns an error if the value is not an array ', async () => {
         assert.equal(
-         await validators.isArray.ofType(validators.isNumeric)(false),
+         await types.isArray.and(
+          conditions.ofType(types.isNumeric))(false),
           'value is not an array'
         );
       });
@@ -400,43 +443,49 @@ describe('shared/type-validation', () => {
       it('can still be required', async () => {
         // Allow empty arrays even with ofType condition.
         assert.equal(
-          await validators.isArray.ofType(validators.isNumeric).isRequired([]),
+          await types.isArray.and(
+            required,
+            conditions.ofType(types.isNumeric)
+          )([]),
           true
         );
       });
-      it.skip('can still add limit and required', async () => {
-        // Allow empty arrays even with ofType condition.
+      it('can still add limit and required', async () => {
         assert.equal(
-          await validators.isArray.ofType(validators.isNumeric).limit(0,10).isRequired(['4']),
+          await types.isArray.and(
+            conditions.ofType(types.isNumeric),
+            conditions.range(0,10),
+            conditions.required
+          )([4]),
           true
         );
       });
     });
   });
-
+  
   describe('isObject', () => {
     it('does not return an error if the value is an array', () => {
-      assert.equal(validators.isObject({}), true);
+      assert.equal(types.isObject({}), true);
     });
 
     it('returns an error if the value is not an object', () => {
-      assert.equal(validators.isObject(0), 'value is not an object');
-      assert.equal(validators.isObject([]), 'value is not an object');
-      assert.equal(validators.isObject(null), 'value is not an object');
+      assert.equal(types.isObject(0), 'value is not an object');
+      assert.equal(types.isObject([]), 'value is not an object');
+      assert.equal(types.isObject(null), 'value is not an object');
     });
 
     it('does not return an error if the value is undefined', () => {
-      assert.equal(validators.isObject(undefined), true);
+      assert.equal(types.isObject(undefined), true);
     });
 
-    describe('with isRequired', () => {
-      it('does not return an error if the value is not undefined', () => {
-        assert.equal(validators.isObject.isRequired({}), true);
+    describe('with required', () => {
+      it('does not return an error if the value is not undefined', async () => {
+        assert.equal(await types.isObject.and(conditions.required)({}), true);
       });
 
       it('returns an error if the value is undefined', async () => {
         assert.equal(
-          await validators.isArray.isRequired(undefined),
+          await types.isArray.and(conditions.required)(undefined),
           'value is required but missing'
         );
       });
@@ -444,10 +493,10 @@ describe('shared/type-validation', () => {
 
     describe('with ofShape', () => {
       const shape = {
-        a: validators.isBoolean,
+        a: types.isBoolean,
         b: {
-          c: validators.isString,
-          d: validators.isString.isRequired,
+          c: types.isString,
+          d: types.isString.and(conditions.required),
         },
       };
 
@@ -459,7 +508,7 @@ describe('shared/type-validation', () => {
             d: 'string 2',
           },
         };
-        assert.equal(await validators.isObject.ofShape(shape)(data), true);
+        assert.equal(await types.isObject.and(conditions.ofShape(shape))(data), true);
       });
 
       it('returns an error if the shape does not match the schema', async () => {
@@ -470,7 +519,7 @@ describe('shared/type-validation', () => {
             // d is missing
           },
         };
-        assert.deepEqual(await validators.isObject.ofShape(shape)(data), [
+        assert.deepEqual(await types.isObject.and(conditions.ofShape(shape))(data), [
           {
             key: 'b.c',
             error: 'value is not a string',
@@ -484,7 +533,7 @@ describe('shared/type-validation', () => {
 
       it('returns an error if the value is not an object', async () => {
         assert.equal(
-          await validators.isObject.ofShape(shape)(0),
+          await types.isObject.and(conditions.ofShape(shape))(0),
           'value is not an object'
         );
       });
@@ -497,15 +546,19 @@ describe('shared/type-validation', () => {
             d: 'string 2',
           },
         };
-        assert.equal(await validators.isObject.ofShape(shape).isRequired(data), true);
+        assert.equal(
+          await types.isObject.and(
+            conditions.ofShape(shape),
+            conditions.required)(data),
+          true);
       });
     });
   });
 
-  describe('oneOfType', () => {
+  describe('isAnyOf', () => {
     it('does not return an error if the value matches an allowed type', async () => {
       assert.equal(
-        await validators.oneOfType([validators.isBoolean, validators.isString])(
+        await types.isAnyOf([types.isBoolean, types.isString])(
           'string'
         ),
         true
@@ -514,12 +567,12 @@ describe('shared/type-validation', () => {
 
     // both object schemas in the array below are equivalent  
     [
-      { foo: validators.isString.isRequired },
-      validators.isObject.ofShape({ foo: validators.isString.isRequired })
+      { foo: types.isString.and(conditions.required) },
+      types.isObject.and(conditions.ofShape({ foo: types.isString.and(conditions.required) }))
     ].forEach(objectSchema => {
       it('does not return an error if the value matches an allowed type of object', async () => {
         assert.equal(
-          await validators.oneOfType([objectSchema])(
+          await types.isAnyOf([objectSchema])(
             { foo: "string" }
           ),
           true
@@ -529,12 +582,12 @@ describe('shared/type-validation', () => {
 
     // both object schemas in the array below are equivalent  
     [
-      { foo: validators.isString.isRequired },
-      validators.isObject.ofShape({ foo: validators.isString.isRequired })
+      { foo: types.isString.and(conditions.required) },
+      types.isObject.and(conditions.ofShape({ foo: types.isString.and(conditions.required) }))
     ].forEach(objectSchema => {
       it('returns an error if the value matches an allowed type of object', async () => {
         assert.equal(
-          await validators.oneOfType([objectSchema])(
+          await types.isAnyOf([objectSchema])(
             {}
           ),
           'value failed to match one of the the allowed types'
@@ -544,41 +597,43 @@ describe('shared/type-validation', () => {
 
     it('returns an error if the value does not match an allowed type', async () => {
       assert.equal(
-        await validators.oneOfType([validators.isBoolean, validators.isString])(1),
+        await types.isAnyOf([types.isBoolean, types.isString])(1),
         'value failed to match one of the the allowed types'
       );
     });
 
     it('does not return an error if the value is undefined', async () => {
       assert.equal(
-        await validators.oneOfType([validators.isBoolean, validators.isString])(
+        await types.isAnyOf([types.isBoolean, types.isString])(
           undefined
         ),
         true
       );
     });
 
-    describe('with isRequired', () => {
+    describe('with required', () => {
       it('does not return an error if the value is not undefined', async () => {
         assert.equal(
-          await validators
-            .oneOfType([validators.isBoolean, validators.isString])
-            .isRequired('string'),
+          await types
+            .isAnyOf([types.isBoolean, types.isString])
+            .and(conditions.required)
+          ('string'),
           true
         );
       });
 
       it('returns an error if the value is undefined', async () => {
         assert.equal(
-          await validators
-            .oneOfType([validators.isBoolean, validators.isString])
-            .isRequired(undefined),
+          await types
+            .isAnyOf([types.isBoolean, types.isString])
+            .and(conditions.required)
+          (undefined),
           'value is required but missing'
         );
       });
     });
   });
-
+  
   describe('validateData', () => {
     [
       {
@@ -658,28 +713,28 @@ describe('shared/type-validation', () => {
     ].forEach(test => {
       it('validates the follow data', async () => {
         let schema = {
-          varA: validators.isBoolean,
+          varA: types.isBoolean,
           b: {
-            varB: validators.isBoolean,
+            varB: types.isBoolean,
             c: {
-              varC: validators.isBoolean,
+              varC: types.isBoolean,
             },
           },
         };
         assert.deepEqual(
-          await validators.validateData(schema, test.data),
+          await validateData(schema, test.data),
           test.result
         );
       });
     });
 
-    describe('isRequired', () => {
+    describe('with required', () => {
       const schema = {
-        varA: validators.isBoolean,
+        varA: types.isBoolean,
         b: {
-          varB: validators.isBoolean,
+          varB: types.isBoolean,
           c: {
-            varC: validators.isBoolean.isRequired,
+            varC: types.isBoolean.and(conditions.required),
           },
         },
       };
@@ -692,14 +747,14 @@ describe('shared/type-validation', () => {
             // c is missing
           },
         };
-        assert.deepEqual(await validators.validateData(schema, data), true);
+        assert.deepEqual(await validateData(schema, data), true);
       });
 
       it('requires a value if its parent is defined', async () => {
         const schema = {
           b: {
             c: {
-              varC: validators.isBoolean.isRequired,
+              varC: types.isBoolean.and(conditions.required),
             },
           },
         };
@@ -710,7 +765,7 @@ describe('shared/type-validation', () => {
           },
         };
 
-        assert.deepEqual(await validators.validateData(schema, data), [
+        assert.deepEqual(await validateData(schema, data), [
           {
             error: 'value is required but missing',
             key: 'b.c.varC',
@@ -733,7 +788,7 @@ describe('shared/type-validation', () => {
           },
         };
 
-        assert.deepEqual(await validators.validateData(schema, data), [
+        assert.deepEqual(await validateData(schema, data), [
           {
             error: 'value is not an object',
             key: 'b.c',
@@ -742,13 +797,16 @@ describe('shared/type-validation', () => {
       });
 
       it('can accept function based schema', async () => {
-        const schema = validators.isObject.ofShape({
-          b: {
-            c: {
-              varC: validators.isBoolean.isRequired,
+        const schema = types.isObject.and(
+          conditions.ofShape({
+            b: {
+              c: {
+                varC: types.isBoolean.and(conditions.required),
+              }
             }
-          }
-        }).isRequired
+          }), 
+          conditions.required
+        )
 
         const data = {
           b: {
@@ -756,20 +814,20 @@ describe('shared/type-validation', () => {
           },
         };
 
-        assert.deepEqual(await validators.validateData(schema, data), [
+        assert.deepEqual(await validateData(schema, data), [
           { key: 'b.c.varC', error: 'value is required but missing' }
         ]);
       });
 
       it('can validate a single function as schema', async () => {
-        const schema = validators.isString
+        const schema = types.isString
         const data = '5'
-        assert.equal(await validators.validateData(schema, data), true);
+        assert.equal(await validateData(schema, data), true);
       });
 
       it('rejects a single custom function as schema', async () => {
-        const schema = validators.isCustom(async ()=>('test fail'))
-        assert.equal(await validators.validateData(schema, {}), 'test fail');
+        const schema = types.isCustom(async ()=>('test fail'))
+        assert.equal(await validateData(schema, {}), 'test fail');
       });
     });
 
@@ -780,22 +838,22 @@ describe('shared/type-validation', () => {
           extraneous: 'hello',
         };
         let schema = {
-          varA: validators.isBoolean,
+          varA: types.isBoolean,
           b: {
-            varB: validators.isBoolean,
+            varB: types.isBoolean,
             c: {
-              varC: validators.isBoolean,
+              varC: types.isBoolean,
             },
           },
         };
         assert.deepEqual(
-          await validators.validateData(schema, data),
+          await validateData(schema, data),
           [{ key: 'extraneous', error: 'extraneous key found' }]
         );
       });
 
       it('should not return errors for extra values not found in the schema', async () => {
-        const schema = { myObject: { bar: validators.isBoolean } };
+        const schema = { myObject: { bar: types.isBoolean } };
         const data = {
           myValue: true,
           myArray: [],
@@ -804,7 +862,7 @@ describe('shared/type-validation', () => {
             bar: true
           }
         }
-        const result = await validators.validateData(schema, data);
+        const result = await validateData(schema, data);
         assert.deepEqual(result, [
           { key: 'myObject.foo', error: 'extraneous key found' },
           { key: 'myValue', error: 'extraneous key found' },
@@ -821,7 +879,7 @@ describe('shared/type-validation', () => {
         { key: 'myValue', error: 'extraneous key found' },
         { key: 'myArray', error: 'extraneous key found' }
       ]
-      const converted = validators.toKeys(errors);
+      const converted = toKeys(errors);
       assert.deepEqual(converted,
         {
           "myObject.foo": "extraneous key found",
@@ -833,22 +891,26 @@ describe('shared/type-validation', () => {
     it('returns various errors for incorrect values', async () => {
       const schema = {
         zoo: {
-          hours: validators.oneOfType([
-            validators.isString,
-            validators.isInteger,
+          hours: types.isAnyOf([
+            types.isString,
+            types.isInteger,
           ]),
-          animals: validators.isArray.ofType({
-            age: validators.isInteger.isRequired,
-            snake: validators.oneOfType([
-              validators.isString,
-              validators.isBoolean,
-              {
-                food: validators.isObject.ofShape({
-                  rat: validators.isBoolean
-                }).isRequired
-              },
-            ]).isRequired
-          })
+          animals: types.isArray.and(
+            conditions.ofType({
+              age: types.isInteger.and(conditions.required),
+              snake: types.isAnyOf([
+                types.isString,
+                types.isBoolean,
+                {
+                  food: types.isObject.and(
+                    conditions.ofShape({
+                      rat: types.isBoolean
+                    }),
+                    conditions.required
+                  )
+                },
+              ]).and(conditions.required)
+          }))
         },
       };
 
@@ -858,7 +920,7 @@ describe('shared/type-validation', () => {
           animals: [{ snake: { food: { rat: true } } }, { age: 4, snake: "happy" }, { age: 4, snake: 50 }],
         },
       };
-      const result = await validators.validateData(schema, data);
+      const result = await validateData(schema, data);
       assert.deepEqual(result, [
         {
           key: 'zoo.hours', error: 'value failed to match one of the the allowed types'
@@ -878,11 +940,11 @@ describe('shared/type-validation', () => {
           a: {
             'c': {},
             '*': {
-              c: validators.isNumeric,
+              c: types.isNumeric,
             }
           }
         };
-        const result = await validators.validateData(schema, {a:{'1234': {}}});
+        const result = await validateData(schema, {a:{'1234': {}}});
         throw new Error('failed to throw error')
       }catch(e) {
         assert.equal(e.message, 'Schema wildcard conflict. A wildcard can not have sibling keys')
@@ -898,11 +960,11 @@ describe('shared/type-validation', () => {
       const schema = { 
         a: {
           '*': {
-            c: validators.isNumeric,
+            c: types.isNumeric,
           }
         }
       };
-      const result = await validators.validateData(schema, data);
+      const result = await validateData(schema, data);
       assert.equal(true, result)
     })
   })

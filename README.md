@@ -6,16 +6,16 @@ This package is a light weight schema validator useful for asserting keys and ty
 ## Simple example
 
 ```js
-import v from 'easy-validation'
+import {validateData, types, conditions} from 'easy-validation'
 
 
 const schema = {
-  id: v.isNumeric.isRequired,
-  name: v.isString.isRequired,
+  id: types.isNumeric.and(conditions.required),
+  name: types.isString.and(conditions.required),
   attributes: {
-   height: v.isNumeric,
-   weight: v.isNumeric,
-   age: v.isInteger,
+   height: types.isNumeric,
+   weight: types.isNumeric,
+   age: types.isInteger,
   }
 };
 
@@ -67,76 +67,111 @@ success
 ```
 
 
-## Types and modifiers
+## Types and conditions
 
-```js
-isBoolean
-  .isRequired
+All schema values must resolve to a `type`. Optionally each type may have one or more `conditions` attached using the `and()` function to further distinguish what that type can be.
 
-isNumeric
-  .limit(lower, upper)
-  .isRequired  
+_For example, you might want a string, but the string should also not be empty and must be be required (e.g not missing)--that can all be done with conditions._
 
-isInteger  
-  .limit(lower, upper)
-  .isRequired
+e.g. 
+  ```ts
+  const schema = types.isString.and(conditions.notEmpty, conditions.required);
+  const result = validateData(schema, "hello world");
+  ```
 
-isString
-  .oneOf(['enum1', 'enum2', ...])
-  .notEmpty
-  .isRequired
+### Types
 
-isFunction
-  .isRequired
-
-isObject
-  .ofShape({
-     prop1: <type>, ...
-  })
-  .isRequired
-
-isArray
-  .ofType( <type> )
-  .limit(lower, upper)
-  .isRequired
-
-oneOfType([
-    <type1>, <type2>, ....
+- ```
+  isBoolean
+  ```
+- ```
+  isNumeric
+  ```
+- ```
+  isInteger
+  ```
+- ```
+  isString
+  ```
+- ```
+  isFunction
+  ```
+- ```
+  isObject
+  ```
+- ```
+  isArray
+  ```
+- ```ts
+  isAnyOf([
+    parm1: type, parm2: type, ....
   ])
+  ```
+- ```ts
+  isCustom((value: any) => true | "error message")
   .isRequired
+  ```
 
-isCustom(async value=>(true || "error message"))
-  .isRequired
-```
 
+### Conditions
+
+- ```ts
+  required
+  ```
+- ```ts
+  // for string types only
+  notEmpty
+  ```
+- ```ts
+  // for array or number types only
+  range(lowerLimit: number, upperLimit: number)
+  ```
+- ```ts
+  // for string types only
+  inList([string1: string, string2: string, ...]) 
+  ```
+- ```ts
+  // for array types only
+  ofType(type)
+  ```
+- ```ts
+  // for object types only
+  ofShape(shape: object | typeof isObject)  
+  ```
 ### Object literal vs `isObject`
 
-There is one special caveat. An object literal is the same as calling `isObject` with one difference: `isObject` can attach the `.isRequired` condition where the object literal can not.
+There is one special caveat. An object literal is the same as calling `isObject` with one difference: `isObject` can attach additional conditions where as an object literal only gives you the shape. For example:
 
 ```js
-import {isNumber, isString, isObject} from 'easy-validation'
+import {types, conditions, validateData} from 'easy-validation'
 
-var schema1 = {
-  name: isString,
+const schema1 = {
+  name: types.isString,
   props: {
-    x: isNumber,
-    y: isNumber,
-    z: isNumber,
+    x: types.isNumber,
+    y: types.isNumber,
+    z: types.isNumber,
   }
+};
+
+const schema2 = {
+  name: types.isString,
+  props: types.isObject.and(
+    conditions.ofShape({
+      x: types.isNumber,
+      y: types.isNumber,
+      z: types.isNumber,
+    }),
+    conditions.required) // this is different!
 }
 
-var schema2 = {
-  name: isString,
-  props: isObject.ofShape({
-    x: isNumber,
-    y: isNumber,
-    z: isNumber,
-  }).isRequired
-}
+const data = {};
 
+await validateData(schema1, data) // true
+await validateData(schema2, data) // [{ key: 'props', error: 'value is required but missing' }],
 ```
 
-Both will validate the props the same, but if the `props` object was omitted, schema1 would not provide an error but schema2 would.
+Both will validate the props the same, but if the `props` object was omitted, then schema1 would not provide an error but schema2 would.
 
 ## Wildcards
 
@@ -147,7 +182,7 @@ In some cases it might be helpful to create a schema for uuids or unknown key va
 > Note: You can not have any sibling schema keys alongside a wildcard. It must be the only key in an object schema.
 
 ```js
-import v from 'easy-validation'
+import {conditions, types, validateData} from 'easy-validation'
 
 const sampleData = {
   ids: {
@@ -163,50 +198,58 @@ const sampleData = {
 
 const schema = {
   'ids': {
-    '*': isObject.ofShape({
-      name: isString.isRequired
-    }).isRequired
+    '*': types.isObject.and(
+      conditions.ofShape({
+        name: isString.isRequired
+      }),
+      conditions.required
+      )
   }
 }
 
-const result = await v.validateData(schema, sampleData);
+const result = await validateData(schema, sampleData);
 ```
 
 
 ## A Larger Example
 
 ```js
-import v from 'easy-validation'
+const {types, conditions, validateData} = require('./src/index');
 
 const color = {
-  red: v.isInteger.limit(0,255).isRequired,
-  green: v.isInteger.limit(0,255).isRequired,
-  blue: v.isInteger.limit(0,255).isRequired,
-  alpha: v.isNumeric.limit(0,1).isRequired,
+  red: types.isInteger.and(conditions.range(0,255), conditions.required),
+  green: types.isInteger.and(conditions.range(0,255), conditions.required),
+  blue: types.isInteger.and(conditions.range(0,255), conditions.required),
+  alpha: types.isNumeric.and(conditions.range(0,1), conditions.required),
 }
 
-const defaultColor = v.isString.oneOf([
+const defaultColor = types.isString.and(conditions.inList([
   'red', 
   'blue', 
   'green', 
   'yellow', 
   'black'
-]);
+]));
 
 const schema = {
-  name: v.isString.isRequired,
-  description: v.isString,
-  colors: v.isArray.ofType(
-    // it can be an <r,b,g,a> object or a string
-    v.oneOfType([
-      color, defaultColor
-    ])
-  ).isRequired,
-  properties: v.isObject.ofShape({
-    length: v.isNumeric.limit(0,100).isRequired,
-    width: v.isNumeric.limit(0,1000).isRequired,
-    height: v.isNumeric.limit(0,100).isRequired,
-  }).isRequired
+  name: types.isString.and(conditions.required),
+  description: types.isString,
+  colors: types.isArray.and(conditions.ofType(
+    types.isAnyOf([
+      // array items can be a color or enumerated string
+      color, 
+      defaultColor]) 
+    ),
+    conditions.required
+  ),
+  properties: types.isObject.and(
+    conditions.ofShape({
+      length: types.isNumeric.and(conditions.range(0,100), conditions.required),
+      width: types.isNumeric.and(conditions.range(0,100), conditions.required),
+      height: types.isNumeric.and(conditions.range(0,100), conditions.required),
+    }),
+    conditions.required
+  )
 }
 
 const sampleData = {
@@ -219,7 +262,7 @@ const sampleData = {
   }
 }
 
-const result = await v.validateData(schema, sampleData);
+const result = await validateData(schema, sampleData);
 res.status(200).json(result);
 ```
 
@@ -227,7 +270,10 @@ result:
 
 ```json
 [
-  {"key":"colors.3","error":"value failed to match one of the the allowed types"}
+  {
+    "key":"colors.3",
+    "error":"value failed to match one of the the allowed types"
+  }
 ]
 ```
 
@@ -235,11 +281,11 @@ result:
 Use `isCustom` to pass async functions to validate values. This is useful for performing a database query to validate an ID asynchronously. 
 
 ```js
-  import v from 'easy-validation'
+  const {types, conditions, validateData} = require('./src/index');
 
   async function validateKey(value) {
     try {
-      await myLookupFunction(value);
+      await myLookupFunction(value); // this could be a lookup in a database for example
       return true;
     }
     catch (e) {
@@ -248,9 +294,9 @@ Use `isCustom` to pass async functions to validate values. This is useful for pe
 
   }
   const schmea = {
-    id: v.isCustom(validateKey).isRequired,
+    id: types.isCustom(validateKey).and(conditions.required),
   }
-  const result = await v.validateData(schema, {
+  const result = await validateData(schema, {
     id: 123467
   });
   
@@ -287,9 +333,9 @@ const [validationErrors setValidationErrors]  = useState({})
 try {
   // some API endpoint that validates the payload
   await this.$axios.$post("...", fields);
-} catch(e) {
+} catch(err) {
   // transform the array of errors to key:value errors that can be indexed into
-  const keyErrors = toKeys(e.response.data)
+  const keyErrors = toKeys(err.response.data)
   
   setValidationErrors(keyErrors); 
 }

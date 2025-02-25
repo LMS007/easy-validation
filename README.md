@@ -161,7 +161,7 @@ While both schemas validate the `props` object, if `props` is omitted, `schema1`
 
 In some cases, it may be helpful to create a schema for UUIDs or unknown key values. A wildcard allows validation of dynamic keys inside an object. This is useful for accessing data in `O(1)` time using an ID instead of searching through an array.
 
-> **Note:** Wildcards must be the only key in an object schema.
+> **Note:** Wildcards must be the only key in an object schema for each respective level.
 
 ```js
 import { conditions, types, validateData } from 'easy-validation';
@@ -191,4 +191,6 @@ const result = await validateData(schema, sampleData);
 
 - Custom error messages for each type
 - Support for nullable types (e.g., `isString.nullable`)
+- Add safeString condition 
+- Add support for data translators
 

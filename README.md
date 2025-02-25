@@ -190,7 +190,7 @@ const result = await validateData(schema, sampleData);
 ## Future Enhancements
 
 - Custom error messages for each type
-- Support for nullable types (e.g., `isString.nullable`)
+- Support for nullable types
 - Add safeString condition 
 - Add support for data translators
 

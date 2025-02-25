@@ -2,6 +2,8 @@
 
 This package is a light weight schema validator useful for asserting keys and types inside an object or a JSON response often from an HTTP requests. You can reject requests which have incomplete or malformed payloads before passing that data along to other parts of the system. Its also useful for giving users feedback about what is malformed. This package pairs especially well with MongoDB where after you validate, you can directly insert the JSON objects into the database with confidence.
 
+### Packages
+https://www.npmjs.com/package/@lms5400/easy-validation
 
 ## Simple example
 

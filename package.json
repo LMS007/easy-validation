@@ -1,12 +1,12 @@
 {
   "name": "@lms5400/easy-validation",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "repository": {
     "type": "git",
     "url": "git@github.com:LMS007/easy-validation.git"
   },
   "description": "Simple JSON schema validation. Ideal for request payloads",
-  "main": "src/type-validation.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "jest --config ./jest.config.json"
   },

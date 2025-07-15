@@ -40,22 +40,60 @@ function inList(list) {
 };
 
 /**
- * @type {(lower: number ,upper: number) => Validator}
+ * For upper or lower, pass undefined to ignore the boundary limit
+ * 
+ * @type {(lower: number|undefined ,upper: number|undefined) => Validator}
  */
 function range(lower, upper) {
   const validator = (value) => {
+    
     if (Array.isArray(value)) {
-      if (value.length >= lower && value.length <= upper) {
+      if (lower === undefined ) {
+        if (value.length > upper) {
+          return `array size must be less than or equal to ${upper}`;
+        }
+        else {
+          return true;
+        }
+      }
+      else if(upper === undefined ) {
+        if (value.length < lower) {
+          return `array size must be greater than or equal to ${lower}`;
+        }
+        else {
+          return true;
+        }
+      }
+      else if (value.length >= lower && value.length <= upper) {
         return true;
       } else {
         return `array size falls outside of range (${lower}, ${upper})`;
       }
     }
-    else if (value >= lower && value <= upper) {
-      return true;
-    } else {
-      return `value falls outside of range (${lower}, ${upper})`;
+    else {
+      if (lower === undefined ) {
+        if (value > upper) {
+          return `value must be less than or equal to ${upper}`;
+        }
+        else {
+          return true;
+        }
+      }
+      else if(upper === undefined ) {
+        if (value < lower) {
+          return `value must be greater than or equal to ${lower}`;
+        }
+        else {
+          return true;
+        }
+      }
+      else if (value >= lower && value <= upper) {
+        return true;
+      } else {
+        return `value falls outside of range (${lower}, ${upper})`;
+      }
     }
+    
   }
   validator.priority = 2; // needed for ordering
   return validator;

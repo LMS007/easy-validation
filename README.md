@@ -115,8 +115,8 @@ required
 // Applicable to string types only
 notEmpty
 
-// Applicable to array or number types only
-range(lowerLimit: number, upperLimit: number)
+// Applicable to array or number types only. Pass undefined for either parameter to remove the relative limit.
+range(lowerLimit: number|undefined, upperLimit: number|undefined)
 
 // Applicable to string types only
 inList([string1: string, string2: string, ...]) 

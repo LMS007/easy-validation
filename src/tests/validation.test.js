@@ -168,6 +168,34 @@ describe('shared/type-validation', () => {
         );
       });
 
+      it('returns an error if the value is above or equal to an upper limit only', async () => {
+        assert.equal(
+          await types.isNumeric.and(conditions.range(undefined, 10))(11),
+          'value must be less than or equal to 10'
+        );
+      });
+
+      it('returns true if the value is below  or equal to an upper limit only', async () => {
+        assert.equal(
+          await types.isNumeric.and(conditions.range(undefined, 10))(1),
+          true
+        );
+      });
+
+      it('returns an error if the value is below  or equal to a lower limit only', async () => {
+        assert.equal(
+          await types.isNumeric.and(conditions.range(-1, undefined))(-2),
+          'value must be greater than or equal to -1'
+        );
+      });
+
+      it('returns true if the value is above or equal to a lower limit only', async () => {
+        assert.equal(
+          await types.isNumeric.and(conditions.range(0, undefined))(0),
+          true
+        );
+      });
+
       it('can still can be required', async () => {
         assert.equal(await types.isNumeric.and(
           conditions.range(0, 10),
@@ -345,17 +373,17 @@ describe('shared/type-validation', () => {
     });
 
     describe('with range', () => {
-      it('does not return an error if the value is within the limits', async () => {
+      it('does not return an error if the size is within the limits', async () => {
         assert.equal(
           await types.isArray.and(conditions.range(0,1))([1]), 
           true);
       });
-      it('returns an error if the value is over the limits', async () => {
+      it('returns an error if the size is over the limits', async () => {
         assert.equal(
           await types.isArray.and(conditions.range(0,1))([1,2]), 
           'array size falls outside of range (0, 1)');
       });
-      it('returns an error if the value is under the limits', async () => {
+      it('returns an error if the size is under the limits', async () => {
         assert.equal(
           await types.isArray.and(conditions.range(1,2))([]), 
           'array size falls outside of range (1, 2)');
@@ -370,6 +398,35 @@ describe('shared/type-validation', () => {
           await types.isArray.and(conditions.range(0,1), conditions.required)([1,2]),
           'array size falls outside of range (0, 1)');
       });
+
+      it('returns an error if the size is above an upper limit only', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(undefined,2), conditions.required)([1,2,3]),
+          'array size must be less than or equal to 2'
+        );
+      });
+
+      it('returns true if the size is below an upper limit only', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(undefined,2), conditions.required)([1,2]),
+          true
+        );
+      });
+
+      it('returns an error if the value is below a lower limit only', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(3, undefined), conditions.required)([1,2]),
+          'array size must be greater than or equal to 3'
+        );
+      });
+
+      it('returns true if the size is above a lower limit only', async () => {
+        assert.equal(
+          await types.isArray.and(conditions.range(3, undefined), conditions.required)([1,2,3]),
+          true
+        );
+      });
+
     });
 
     describe('with ofType', () => {

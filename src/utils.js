@@ -23,7 +23,7 @@ function attachOptions(shim /*, validOptions*/) {
 
       for (const validator of options) {
         if (typeof validator !== 'function') {
-          throw Error(`Optional condition is not a function`)
+          throw Error(`Optional condition is not a function: ${args}`)
         }
         result = await validator(value, ...args)
         if (result !== true) {

@@ -507,6 +507,7 @@ describe('shared/type-validation', () => {
           true
         );
       });
+
       it('can still add limit and required', async () => {
         assert.equal(
           await types.isArray.and(
@@ -514,6 +515,16 @@ describe('shared/type-validation', () => {
             conditions.range(0,10),
             conditions.required
           )([4]),
+          true
+        );
+      });
+
+      it('can still still be omitted', async () => {
+        // Allow undefined even with ofType condition.
+        assert.equal(
+          await types.isArray.and(
+            conditions.ofType(types.isNumeric)
+          )(undefined),
           true
         );
       });

@@ -107,7 +107,11 @@ function range(lower, upper) {
  */
 function ofType(type) {
   const shim = async (value, prefix = '') => {
-    
+    if (!value) {
+      // if there is no array, ignore it, it could be omitted 
+      // note: required() condition will error if added
+      return true;
+    }
     if (prefix !== '') {
       prefix = `${prefix}.`;
     }

@@ -6,9 +6,16 @@ function attachOptions(shim /*, validOptions*/) {
   let result;
   shim.and = (...options) => {
     const validate = async (value, ...args) => {
+      
       result = await shim(value, ...args)
       if (result !== true) {
         return result
+      }
+
+      let required = options.filter(v=>v && v.hasRequiredCondition == true);
+      if(required.length == 0 && value === undefined) {
+        // special case for undefined values so they avoid running further conditions.
+        return true;
       }
 
       // ensures high priority conditions are ran first

@@ -13,6 +13,7 @@ function required(value) {
   return true;
 };
 required.priority = 3; // needed for ordering
+required.hasRequiredCondition = true// special case for shortcoming in validation
 
 /**
  * 

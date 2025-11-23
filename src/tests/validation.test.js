@@ -113,6 +113,7 @@ describe('shared/type-validation', () => {
   });
   
   describe('isNumeric', () => {
+
     it('does not return an error if the value is a number', () => {
       assert.equal(types.isNumeric(1), true);
     });
@@ -192,6 +193,13 @@ describe('shared/type-validation', () => {
       it('returns true if the value is above or equal to a lower limit only', async () => {
         assert.equal(
           await types.isNumeric.and(conditions.range(0, undefined))(0),
+          true
+        );
+      });
+
+      it('returns true if the value is undefined and not required', async () => {
+        assert.equal(
+          await types.isNumeric.and(conditions.range(0, 100))(undefined),
           true
         );
       });
@@ -278,12 +286,19 @@ describe('shared/type-validation', () => {
       assert.equal(result, 'string does not match');
     });
 
+    it('does not return an error if the value is undefined', async () => {
+        const custom = (v)=>(v === "hello world" ? true : "string does not match")
+        const result = await types.isCustom(custom)(undefined)
+        assert.equal(result, true);
+      });
+
     describe('with required', () => {
       it('runs a custom function and passes', async () => {
         const custom = (v)=>(v === "hello world" ? true : "string does not match")
         const result = await types.isCustom(custom).and(conditions.required)("hello world")
         assert.equal(result, true);
       });
+
       it('returns an error if the value is undefined', async () => {
         const custom = (v)=>(v === "hello world" ? true : "string does not match")
         const result = await types.isCustom(custom).and(conditions.required)(undefined)

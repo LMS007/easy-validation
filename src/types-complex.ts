@@ -1,13 +1,11 @@
-const { isObject, baseShim } = require('./types-basic')
-const { validateData  } = require('./validation')
-const { attachOptions  } = require('./utils')
+import { isObject, baseShim } from './types-basic'
+import { validateData } from './validation'
+import { attachOptions } from './utils'
+import type { Validator } from './types'
 
 
-/**
- * @param {Validator[]} types
- */
-function isAnyOfShim(types) {
-  const shim = baseShim(async (value) => {
+function isAnyOfShim(types: Validator[]) {
+  const shim = baseShim(async (value: any) => {
     let result;
     for (let i = 0; i < types.length; i++) {
       const isObjectResult = isObject(types[i]);
@@ -29,6 +27,6 @@ function isAnyOfShim(types) {
 }
 
 
-module.exports = {
-  isAnyOf: isAnyOfShim,
+export {
+  isAnyOfShim as isAnyOf,
 };

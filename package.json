@@ -1,21 +1,37 @@
 {
   "name": "@lms5400/easy-validation",
-  "version": "2.0.7",
+  "version": "3.0.0",
   "repository": {
     "type": "git",
     "url": "git@github.com:LMS007/easy-validation.git"
   },
   "description": "Simple JSON schema validation. Ideal for request payloads",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "jest --config ./jest.config.json"
+    "test": "jest --config ./jest.config.json",
+    "build": "tsc",
+    "lint": "eslint src --ext .js,.ts"
   },
   "author": "kkeating@gmail.com",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "jest": "^29.7.0"
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "eslint": "^10.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.3.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0"
   }
 }

@@ -1,25 +1,5 @@
-const {isObject} = require('./types-basic')
-
-/**
- * @typedef {(any)=>any} ValidatorFunction
- */
-
-/**
- * @typedef ValidatorProperties
- * @prop {(any)=>any} [isRequired]
- * @prop {(any)=>any} [oneOf]
- * @prop {(any)=>any} [ofType]
- */
-
-/**
- * @typedef {ValidatorFunction & ValidatorProperties} Validator
- */
-
-/**
- * @typedef ValidationError
- * @prop {string} key
- * @prop {string} error
- */
+import { isObject } from './types-basic'
+import type { ValidationError } from './types'
 
 /**
  * Validate the following `data` against the following `schema`. Returns true
@@ -42,13 +22,8 @@ const {isObject} = require('./types-basic')
  * }
  *
  * let result = validateData(schema, sampleData);
- *
- * @param {Object} schema
- * @param {Object} data
- * @param {string} [prefix]
- * @return {true|ValidationError[]}
  */
-async function validateData(schema, data, prefix = '') {
+async function validateData(schema: Record<string, any>, data: Record<string, any>, prefix: string = ''): Promise<true | ValidationError[]> {
   if (typeof schema == 'function') {
     // no object literal supplied, just execute function
     return schema(data, prefix);
@@ -116,7 +91,7 @@ async function validateData(schema, data, prefix = '') {
     }
   }
 
-  for (extraneousKey of extraneousKeysArr) {
+  for (let extraneousKey of extraneousKeysArr) {
     // error
     const key = prefix ? `${prefix}.${extraneousKey}` : extraneousKey;
     results.push({
@@ -127,16 +102,15 @@ async function validateData(schema, data, prefix = '') {
   return results.length ? results : true;
 }
 
-function toKeys(validationResult) {
-  const keyErrors = validationResult.reduce((acc, item) => {
+function toKeys(validationResult: ValidationError[]): Record<string, string> {
+  const keyErrors = validationResult.reduce((acc: Record<string, string>, item) => {
     acc[item.key] = item.error
     return acc;
   }, {});
   return keyErrors;
 }
 
-module.exports = {
-  // validation runner
-  validateData: validateData,
-  toKeys: toKeys,
+export {
+  validateData,
+  toKeys,
 }

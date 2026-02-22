@@ -1,56 +1,49 @@
-const { isObject } = require('./types-basic')
-const { validateData } = require('./validation')
+import { isObject } from './types-basic'
+import { validateData } from './validation'
 
 /**
- * 
- * @param {any} value 
- * @returns 
+ * Requires a value to be defined.
  */
-function required(value) {
+function required(value: any) {
   if (value === undefined) {
     return 'value is required but missing';
   }
   return true;
-};
-required.priority = 3; // needed for ordering
-required.hasRequiredCondition = true// special case for shortcoming in validation
+}
+(required as any).priority = 3; // needed for ordering
+(required as any).hasRequiredCondition = true; // special case for shortcoming in validation
 
 /**
- * 
- * @param {any} value 
- * @returns 
+ * Requires a string value to not be empty.
  */
-function notEmpty(value) {
+function notEmpty(value: any) {
   return value === '' ? "string value can not be empty" : true
 }
-notEmpty.priority = 2; // needed for ordering
-
+(notEmpty as any).priority = 2; // needed for ordering
 
 /**
- * @type {(list: string[]) => Validator}
+ * Restricts the value to a list of allowed values.
  */
-function inList(list) {
-  const validator = (value => {
+function inList(list: string[]) {
+  const validator = ((value: any) => {
     if (list.indexOf(value) >= 0) {
       return true;
     }
     return `value does not match accepted values: [${list}]`;
-  });
+  }) as any;
   validator.priority = 2; // needed for ordering
   return validator
-};
+}
 
 /**
- * For upper or lower, pass undefined to ignore the boundary limit
- * 
- * @type {(lower: number|undefined ,upper: number|undefined) => Validator}
+ * For upper or lower, pass undefined to ignore the boundary limit.
  */
-function range(lower, upper) {
-  const validator = (value) => {
+function range(lower: number | undefined, upper: number | undefined) {
+  const validator = ((value: any) => {
     
     if (Array.isArray(value)) {
       if (lower === undefined ) {
-        if (value.length > upper) {
+        if (value.length > upper!) {
           return `array size must be less than or equal to ${upper}`;
         }
         else {
@@ -73,7 +66,7 @@ function range(lower, upper) {
     }
     else {
       if (lower === undefined ) {
-        if (value > upper) {
+        if (value > upper!) {
           return `value must be less than or equal to ${upper}`;
         }
         else {
@@ -95,19 +88,17 @@ function range(lower, upper) {
       }
     }
     
-  }
+  }) as any;
   validator.priority = 2; // needed for ordering
   return validator;
-};
-
+}
 
 /**
  * Restrict the array to a particular type.
- *  - An empty array is still valid with this condition.
- * @type {(type: Validator) => Validator}
+ * An empty array is still valid with this condition.
  */
-function ofType(type) {
-  const shim = async (value, prefix = '') => {
+function ofType(type: any) {
+  const shim = (async (value: any, prefix: string = '') => {
     if (!value) {
       // if there is no array, ignore it, it could be omitted 
       // note: required() condition will error if added
@@ -117,7 +108,8 @@ function ofType(type) {
       prefix = `${prefix}.`;
     }
 
-    let results = [];
+    let results: any[] = [];
+    let result;
     // multiple errors may be returned if the type is an object
     for (let i = 0; i < value.length; i++) {
       if (isObject(type)) {
@@ -138,30 +130,27 @@ function ofType(type) {
       }
     }
     return results.length ? results : true
-  };
+  }) as any;
   shim.priority = 0; // needed for ordering
   return shim;
-};
-
+}
 
 /**
- * @type {(shape: Object) => Validator}
+ * Validates that the object matches the given shape.
  */
-function ofShape(shape) {
-  const shim = async (value, prefix = '') => {
+function ofShape(shape: any) {
+  const shim = (async (value: any, prefix: string = '') => {
     const isObjectResult = isObject(value);
     if (isObjectResult === true) {
       return await validateData(shape, value, prefix);
     }
     return isObjectResult;
-  };
+  }) as any;
   shim.priority = 0; // needed for ordering
   return shim;
-};
+}
 
-
-module.exports = {
-  // validators
+export {
   range,
   inList,
   notEmpty,

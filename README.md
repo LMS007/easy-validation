@@ -1,8 +1,16 @@
-# Simple JavaScript Object & JSON Validator
+# Simple JavaScript/TypeScript Object & JSON Validator
 
-This package is a lightweight schema validator that is useful for asserting keys and types inside an object or a JSON response, often from HTTP requests. It allows you to reject requests with incomplete or malformed payloads before passing the data along to other parts of the system. It is also helpful for providing users with feedback about what is malformed. 
+This package is a lightweight schema validator that is useful for asserting keys and types inside an object or a JSON response, often from HTTP requests. It allows you to reject requests with incomplete or malformed payloads before passing the data along to other parts of the system. It is also helpful for providing users with feedback about what is malformed.
+
+This package includes TypeScript type definitions out of the box.
 
 This package pairs especially well with MongoDB because, after validation, you can confidently insert the JSON objects into the database.
+
+## Installation
+
+```bash
+npm install @lms5400/easy-validation
+```
 
 ## Simple Example
 
@@ -140,9 +148,9 @@ import { types, conditions, validateData } from 'easy-validation';
 const schema1 = {
   name: types.isString,
   props: {
-    x: types.isNumber,
-    y: types.isNumber,
-    z: types.isNumber,
+    x: types.isNumeric,
+    y: types.isNumeric,
+    z: types.isNumeric,
   }
 };
 
@@ -150,9 +158,9 @@ const schema2 = {
   name: types.isString,
   props: types.isObject.and(
     conditions.ofShape({
-      x: types.isNumber,
-      y: types.isNumber,
-      z: types.isNumber,
+      x: types.isNumeric,
+      y: types.isNumeric,
+      z: types.isNumeric,
     }),
     conditions.required  // This makes a difference!
   )
@@ -201,7 +209,7 @@ const result = await validateData(schema, sampleData);
 This is a more complete sample of what the API might look like in practice.
 
 ```js
-const {types, conditions, validateData} = require('./src/index');
+const {types, conditions, validateData} = require('easy-validation');
 
 const color = {
   red: types.isInteger.and(conditions.range(0,255), conditions.required),
@@ -268,7 +276,7 @@ result:
 Use `isCustom` to pass asynchronous functions to value validation. This is useful for performing a database query to validate an ID asynchronously. Alternatively you may also create any custom condition you wish and add it to the `and()` parameters for a given type. Conditions are asynchronously by nature too.
 
 ```js
-  const {types, conditions, validateData} = require('./src/index');
+  const {types, conditions, validateData} = require('easy-validation');
 
   async function validateKey(value) {
     try {

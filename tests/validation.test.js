@@ -1,7 +1,7 @@
 const assert = require('assert').strict;
 
-const { required } = require('../conditions');
-const {types, conditions, validateData, toKeys} = require('../index');
+const { required } = require('../src/conditions');
+const {types, conditions, validateData, toKeys} = require('../src/index');
 
 
 describe('shared/type-validation', () => {
@@ -124,6 +124,14 @@ describe('shared/type-validation', () => {
 
     it('does not return an error if the value is undefined', () => {
       assert.equal(types.isNumeric(undefined), true);
+    });
+
+    it('does not return an error if the value is NaN', () => {
+      assert.equal(types.isNumeric(NaN), 'value is not a number');
+    });
+
+    it('does not return an error if the value is Infinity', () => {
+      assert.equal(types.isNumeric(Infinity), 'value is not a number');
     });
 
     describe('with required', () => {
@@ -315,7 +323,7 @@ describe('shared/type-validation', () => {
             },100)
           })
         }
-        const custom = async (v)=>{
+        const custom = async ()=>{
           await wait100();
           return true
         }
@@ -1027,7 +1035,7 @@ describe('shared/type-validation', () => {
             }
           }
         };
-        const result = await validateData(schema, {a:{'1234': {}}});
+        await validateData(schema, {a:{'1234': {}}});
         throw new Error('failed to throw error')
       }catch(e) {
         assert.equal(e.message, 'Schema wildcard conflict. A wildcard can not have sibling keys')

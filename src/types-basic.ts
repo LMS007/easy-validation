@@ -1,11 +1,7 @@
-const { attachOptions  } = require('./utils')
+import { attachOptions } from './utils'
 
-
-/**
- * @type {Validator} shim
- */
-function baseShim(shim) {
-  return (value, ...args) => {
+function baseShim(shim: any) {
+  return (value: any, ...args: any[]) => {
     if (value === undefined) {
       return true;
     } else {
@@ -14,12 +10,8 @@ function baseShim(shim) {
   };
 }
 
-
-/**
- * @param {any} value
- */
-function isStringShim(value) {
-  return baseShim(value => {
+function isStringShim(value: any) {
+  return baseShim((value: any) => {
     if (typeof value === 'string') {
       return true;
     }
@@ -28,22 +20,15 @@ function isStringShim(value) {
 }
 attachOptions(isStringShim);
 
-/**
- * @param {any} value
- */
-function isCustomShim(customCondition) {
-  const shim = baseShim(async value => {
+function isCustomShim(customCondition: any) {
+  const shim = baseShim(async (value: any) => {
     return await customCondition(value);
   }); 
   attachOptions(shim);
   return shim;
-};
+}
 
-
-/**
- * @param {any} value
- */
-const isBooleanShim = baseShim(value => {
+const isBooleanShim = baseShim((value: any) => {
   if (typeof value === 'boolean') {
     return true;
   }
@@ -51,12 +36,9 @@ const isBooleanShim = baseShim(value => {
 });
 attachOptions(isBooleanShim);
 
-/**
- * @param {any} value
- */
-function isNumericShim(value) {
-  return baseShim(value => {
-    if (typeof value === 'number') {
+function isNumericShim(value: any) {
+  return baseShim((value: any) => {
+    if (Number.isFinite(value)) {
       return true;
     }
     return 'value is not a number';
@@ -64,11 +46,8 @@ function isNumericShim(value) {
 }
 attachOptions(isNumericShim);
 
-/**
- * @param {any} value
- */
-function isIntegerShim(value) {
-  return baseShim(value => {
+function isIntegerShim(value: any) {
+  return baseShim((value: any) => {
     if (Number.isInteger(value)) {
       return true;
     }
@@ -77,24 +56,16 @@ function isIntegerShim(value) {
 }
 attachOptions(isIntegerShim);
 
-
-/**
- * @param {any} value
- */
-const isFunctionShim = baseShim(value => {
+const isFunctionShim = baseShim((value: any) => {
   if (typeof value === 'function') {
     return true;
   }
   return 'value is not a function';
 });
-
 attachOptions(isFunctionShim);
 
-/**
- * @param {any} value
- */
-function isArrayShim(value) {
-  return baseShim(value => {
+function isArrayShim(value: any) {
+  return baseShim((value: any) => {
     if (Array.isArray(value)) {
       return true;
     }
@@ -103,12 +74,8 @@ function isArrayShim(value) {
 }
 attachOptions(isArrayShim);
 
-
-/**
- * @param {any} value
- */
-function isObjectShim(value, ...args) {
-  return baseShim((value, pre) => {
+function isObjectShim(value: any) {
+  return baseShim((value: any) => {
     // ensure null and array types are rejected
     if (value && value.constructor === {}.constructor) {
       return true;
@@ -118,17 +85,14 @@ function isObjectShim(value, ...args) {
 }
 attachOptions(isObjectShim);
 
-
-
-module.exports = {
-  // validators
+export {
   baseShim,
-  isString: isStringShim,
-  isBoolean: isBooleanShim,
-  isNumeric: isNumericShim,
-  isInteger: isIntegerShim,
-  isFunction: isFunctionShim,
-  isArray: isArrayShim,
-  isObject: isObjectShim,
-  isCustom: isCustomShim,
+  isStringShim as isString,
+  isBooleanShim as isBoolean,
+  isNumericShim as isNumeric,
+  isIntegerShim as isInteger,
+  isFunctionShim as isFunction,
+  isArrayShim as isArray,
+  isObjectShim as isObject,
+  isCustomShim as isCustom,
 };

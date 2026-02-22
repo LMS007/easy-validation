@@ -1,18 +1,14 @@
-/**
- * Additional conditions added to the type shim
- * @param {function} shim 
- */
-function attachOptions(shim /*, validOptions*/) {
-  let result;
-  shim.and = (...options) => {
-    const validate = async (value, ...args) => {
+function attachOptions(shim: any) {
+  let result: any;
+  shim.and = (...options: any[]) => {
+    const validate = async (value: any, ...args: any[]) => {
       
       result = await shim(value, ...args)
       if (result !== true) {
         return result
       }
 
-      let required = options.filter(v=>v && v.hasRequiredCondition == true);
+      let required = options.filter((v: any) => v && v.hasRequiredCondition == true);
       if(required.length == 0 && value === undefined) {
         // special case for undefined values so they avoid running further conditions.
         return true;
@@ -20,7 +16,7 @@ function attachOptions(shim /*, validOptions*/) {
 
       // ensures high priority conditions are ran first
       // so we resolve things like required before nested objects
-      options.sort((v1, v2)=>{
+      options.sort((v1: any, v2: any) => {
         if (v1.priority > v2.priority) {
           return -1;
         } else {
@@ -43,7 +39,6 @@ function attachOptions(shim /*, validOptions*/) {
   }
 }
 
-
-module.exports = {
+export {
   attachOptions
 }

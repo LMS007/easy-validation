@@ -1,5 +1,5 @@
 import { isObject } from './types-basic'
-import type { Validator, ValidationError } from './types'
+import type { ValidationError } from './types'
 
 /**
  * Validate the following `data` against the following `schema`. Returns true
